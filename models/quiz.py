@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime
 from enum import Enum
 
-from sqlalchemy import String, Boolean, DateTime, Enum as SqlEnum, Double, Integer
+from sqlalchemy import String, Boolean, DateTime, Enum as SqlEnum, Double, Integer, ForeignKey
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
@@ -22,7 +22,7 @@ class DifficultyLevel(str, Enum):
 
 class Quiz(Base):
     __tablename__ = "quizzes"
-    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     title: Mapped[str] = mapped_column(String, nullable=False)
     description: Mapped[str] = mapped_column(String, nullable=True)
     # Thời gian tính theo phút
@@ -31,7 +31,13 @@ class Quiz(Base):
     difficulty_level: Mapped[DifficultyLevel] = mapped_column(SqlEnum(DifficultyLevel))
     created_date: Mapped[datetime] = mapped_column(DateTime, default=datetime.now())
     updated_date: Mapped[datetime] = mapped_column(DateTime, default=datetime.now(), onupdate=datetime.now())
+    subject_id: Mapped[int] = mapped_column(ForeignKey("subjects.id"), nullable=False)
 
-    course_id: Mapped[str] = mapped_column(String, nullable=True)
-    question: Mapped[str] = mapped_column(relationship("Question", back_populates="quiz"))
-    attempts: Mapped[int] = mapped_column(relationship("Attempt", back_populates="quiz"))
+    subject = relationship(back_populates="quizzes")
+
+    quiz_attempts: Mapped[set["QuizAttempt"]] = relationship(back_populates="quiz")
+    questions: Mapped[set["Question"]] = relationship(back_populates="quiz")
+
+
+
+
