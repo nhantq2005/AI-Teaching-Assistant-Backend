@@ -21,7 +21,7 @@ class Document(Base):
     title: Mapped[str] = mapped_column(String, nullable=False)
     created_date: Mapped[datetime] = mapped_column(DateTime, default=datetime.now)
     updated_date: Mapped[datetime] = mapped_column(DateTime, default=datetime.now, onupdate=datetime.now)
-    process_status: Mapped[ProcessingStatus] = mapped_column(SqlEnum(ProcessingStatus), default=ProcessingStatus.CREATE)
+    process_status: Mapped[ProcessingStatus] = mapped_column(SqlEnum(ProcessingStatus), default=ProcessingStatus.PENDING)
     file_url: Mapped[str] = mapped_column(String, nullable=True)
     file_type: Mapped[str] = mapped_column(String, nullable=True)
     file_name: Mapped[str] = mapped_column(String(255), nullable=True)

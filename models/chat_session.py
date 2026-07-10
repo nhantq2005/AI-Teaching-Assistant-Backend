@@ -15,6 +15,6 @@ class ChatSession(Base):
     updated_date: Mapped[datetime] = mapped_column(nullable=False)
     user_id: Mapped[int] = mapped_column(Integer, nullable=False)
 
-    user: Mapped["User"] = mapped_column(relationship(back_populates="chat_sessions"))
+    user: Mapped["User"] = relationship(back_populates="chat_sessions")
 
     chat_messages: Mapped[set["ChatMessage"]] = relationship(back_populates="chat_session")

@@ -15,4 +15,4 @@ class ChatMessage(Base):
 
     chat_session: Mapped["ChatSession"] = relationship(back_populates="chat_messages")
 
-    chat_citations: Mapped[set["ChatCitation"]] = mapped_column(relationship(back_populates="chat_message"))
+    chat_citations: Mapped[set["ChatCitation"]] = relationship(back_populates="chat_message")
