@@ -11,5 +11,5 @@ class ChatCitation(Base):
     document_chunk_id: Mapped[int] = mapped_column(ForeignKey("document_chunks.id"), nullable=False)
     chat_message_id: Mapped[int] = mapped_column(ForeignKey("chat_messages.id"), nullable=False)
 
-    document_chunk: Mapped["DocumentChunk"] = mapped_column(relationship(back_populates="chat_citations"))
-    chat_message: Mapped["ChatMessage"] = mapped_column(relationship(back_populates="chat_citations"))
+    document_chunk: Mapped["DocumentChunk"] = relationship(back_populates="chat_citations")
+    chat_message: Mapped["ChatMessage"] = relationship(back_populates="chat_citations")

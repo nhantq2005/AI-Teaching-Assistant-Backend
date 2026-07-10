@@ -1,5 +1,5 @@
 from datetime import datetime
-from sqlalchemy import String, DateTime, Integer
+from sqlalchemy import String, DateTime, Integer, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from models.base import Base
@@ -14,7 +14,7 @@ class DocumentChunk(Base):
     vector_id: Mapped[str] = mapped_column(String, nullable=True)
     created_date: Mapped[datetime] = mapped_column(DateTime, default=datetime.now)
     updated_date: Mapped[datetime] = mapped_column(DateTime, default=datetime.now, onupdate=datetime.now)
-    document_id: Mapped[int] = relationship("documents.id", nullable=False)
+    document_id: Mapped[int] = mapped_column(ForeignKey("documents.id"))
 
     document: Mapped["Document"] = relationship(back_populates="document_chunks")
 

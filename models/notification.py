@@ -12,7 +12,7 @@ class Notification(Base):
     title: Mapped[str] = mapped_column(String, nullable=False)
     content: Mapped[str] = mapped_column(String, nullable=False)
     created_date: Mapped[datetime] = mapped_column(DateTime, default=datetime.now)
-    subject_id: Mapped[int] = mapped_column(ForeignKey("subject.id"), nullable=True)
+    subject_id: Mapped[int] = mapped_column(ForeignKey("subjects.id"), nullable=True)
 
     subject: Mapped["Subject"] = relationship(back_populates="notifications")
 

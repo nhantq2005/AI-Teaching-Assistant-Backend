@@ -33,7 +33,7 @@ class Quiz(Base):
     updated_date: Mapped[datetime] = mapped_column(DateTime, default=datetime.now(), onupdate=datetime.now())
     subject_id: Mapped[int] = mapped_column(ForeignKey("subjects.id"), nullable=False)
 
-    subject = relationship(back_populates="quizzes")
+    subject:Mapped["Subject"] = relationship(back_populates="quizzes")
 
     quiz_attempts: Mapped[set["QuizAttempt"]] = relationship(back_populates="quiz")
     questions: Mapped[set["Question"]] = relationship(back_populates="quiz")
