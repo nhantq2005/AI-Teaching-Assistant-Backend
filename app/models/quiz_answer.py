@@ -1,9 +1,7 @@
-import uuid
-
 from sqlalchemy import Boolean, Integer
 from sqlalchemy.orm import Mapped, mapped_column
 
-from models.base import Base
+from app.models.base import Base
 
 
 class QuizAnswer(Base):

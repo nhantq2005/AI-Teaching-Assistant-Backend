@@ -1,10 +1,9 @@
-import uuid
 from datetime import datetime
 
 from sqlalchemy import Double, Boolean, DateTime, Integer, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from models.base import Base
+from app.models.base import Base
 
 
 class QuizAttempt(Base):
