@@ -1,12 +1,10 @@
-import uuid
 from datetime import datetime
 from enum import Enum
 
-from sqlalchemy import String, Boolean, DateTime, Enum as SqlEnum, Double, Integer, ForeignKey
-from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
+from sqlalchemy import String, DateTime, Enum as SqlEnum, Integer, ForeignKey
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from models.base import Base
+from app.models.base import Base
 
 
 class ProcessingStatus(str, Enum):

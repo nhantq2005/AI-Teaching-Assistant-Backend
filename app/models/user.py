@@ -3,7 +3,7 @@ from enum import Enum
 from sqlalchemy import String, Boolean, DateTime, Enum as SqlEnum, Integer
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from models.base import Base
+from app.models.base import Base
 
 
 class UserRole(str, Enum):
@@ -11,9 +11,15 @@ class UserRole(str, Enum):
     LECTURER = "LECTURER"
     STUDENT = "STUDENT"
 
+class Gender(str, Enum):
+    MALE = "MALE"
+    FEMALE = "FEMALE"
+
 class User(Base):
     __tablename__ = "users"
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    name: Mapped[str] = mapped_column(String(), nullable=False)
+    gender: Mapped[Gender] = mapped_column(SqlEnum(Gender), nullable=False)
     username: Mapped[str] = mapped_column(String(50), unique=True, nullable=False)
     email: Mapped[str] = mapped_column(String(100), unique=True, nullable=False)
     password: Mapped[str] = mapped_column(String(255), nullable=False)
@@ -22,7 +28,7 @@ class User(Base):
     created_date: Mapped[datetime] = mapped_column(DateTime, default=datetime.now)
 
     documents: Mapped[set["Document"]] = relationship(back_populates="lecturer")
-    attempt_quizzes: Mapped[set["AttemptQuiz"]] = relationship(back_populates="user")
+    attempt_quizzes: Mapped[set["QuizAttempt"]] = relationship(back_populates="user")
     subjects: Mapped[set["Subject"]] = relationship(back_populates="lecturer")
     # enrollments: Mapped[set["Enrollment"]] = relationship(back_populates="user")
     notification_reads: Mapped[set["NotificationRead"]] = relationship(back_populates="user")

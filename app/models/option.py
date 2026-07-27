@@ -1,11 +1,9 @@
-import uuid
-
-from sqlalchemy import UUID, String, Boolean, Integer, ForeignKey
+from sqlalchemy import String, Boolean, Integer, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from models.base import Base
-from models.question import Question
-from models.quiz_attempt import QuizAttempt
+from app.models.base import Base
+from app.models.question import Question
+from app.models.quiz_attempt import QuizAttempt
 
 
 class Option(Base):
