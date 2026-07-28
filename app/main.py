@@ -3,7 +3,12 @@ from fastapi import FastAPI
 from app.routers import user, subject, enrollment, question, option
 from app.routers.document import router as document_router
 
+from app.core.config import settings
+
 app = FastAPI()
+
+settings.configure_cloudinary()
+
 
 app.include_router(document_router, prefix="/api")
 app.include_router(user.router, prefix="/api")
