@@ -15,7 +15,7 @@ app.include_router(user.router, prefix="/api")
 app.include_router(subject.router, prefix="/api")
 app.include_router(enrollment.router, prefix="/api")
 app.include_router(question.router, prefix="/api")
-app.include_router(option.router, prefix="/api")
+# app.include_router(option.router, prefix="/api")
 app.include_router(quiz.router, prefix="/api")
 
 
