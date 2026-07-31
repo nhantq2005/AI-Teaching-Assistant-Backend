@@ -6,29 +6,25 @@ import re
 import time
 import urllib.error
 import urllib.request
+from collections import defaultdict
 from pathlib import Path
 from typing import Any, Iterable
 
 PROMPT = r"""
-Phân tích ảnh tài liệu và trả về nội dung cốt lõi để lưu vào RAG.
+Trích xuất nội dung có ý nghĩa trong ảnh tài liệu để lưu vào hệ thống RAG.
 
-Yêu cầu:
-- Chỉ trả kết quả, không chào hỏi, không mở đầu kiểu "Dưới đây là".
-- Ngắn gọn, chính xác, không thêm kiến thức hoặc ví dụ không xuất hiện trong ảnh.
-- Giữ nguyên thuật ngữ chuyên ngành, tên riêng, ký hiệu và mã nguồn.
-- Nếu tiêu đề slide và tiêu đề sơ đồ trùng ý, chỉ giữ một tiêu đề phù hợp nhất.
+Quy tắc bắt buộc:
+- Chỉ ghi nội dung thực sự nhìn thấy trong ảnh; không suy diễn hoặc bổ sung kiến thức.
+- Giữ nguyên thuật ngữ, số liệu, ký hiệu, mã nguồn và quan hệ mũi tên.
+- Nếu là lưu đồ/sơ đồ, mô tả đúng thứ tự và hướng liên kết bằng "X -> Y".
+- Chỉ ghi những nút thực sự được mũi tên nối với nhau.
+- Không xem biểu tượng trang trí hoặc chữ trong biểu tượng trang trí là một bước của quy trình.
+- Không tạo bảng, mã nguồn hoặc công thức nếu ảnh không có.
+- Không dùng tên giả như "Mục 1", "Mục 2", "Tên nhóm".
+- Nếu ảnh chỉ là biểu tượng nhỏ hoặc không đọc được nội dung có nghĩa, trả đúng: [Không rõ]
+- Không chào hỏi, không giải thích cách phân tích.
 
-Cách trình bày:
-- Sơ đồ phân cấp: dòng đầu là chủ đề; mỗi nhánh viết một dòng theo mẫu
-  - Tên nhóm: mục 1, mục 2, mục 3
-- Lưu đồ: mỗi bước hoặc nhánh viết một bullet, dùng "->" để thể hiện hướng đi.
-- Bảng: dùng Markdown table.
-- Mã nguồn: dùng fenced code block và giữ nguyên thụt lề.
-- Công thức: dùng LaTeX.
-- Ảnh thông thường: tóm tắt trong 1-3 câu.
-- Phần không đọc được ghi [Không rõ].
-
-Không tạo các mục "Loại ảnh", "Mô tả phục vụ RAG" hoặc "Từ khóa".
+Chỉ trả về nội dung cuối cùng, ngắn gọn và đầy đủ.
 """.strip()
 
 REFUSAL_PATTERNS = (
@@ -44,26 +40,35 @@ def _encode_image(image_path: Path) -> str:
 
 
 def _call_ollama(
-    image_path: Path,
-    ollama_url: str,
-    model: str,
-    timeout: float,
-    strict_format: bool = False,
+        image_path: Path,
+        ollama_url: str,
+        model: str,
+        timeout: float,
+        strict_format: bool = False,
 ) -> str:
     prompt = PROMPT
     if strict_format:
-        prompt += "\n\nBắt buộc tuân thủ đúng định dạng ngắn gọn nêu trên."
+        prompt += """
+
+Kết quả trước chưa đạt yêu cầu. Hãy đọc lại ảnh:
+- Không tạo placeholder chung chung.
+- Không thêm loại nội dung không xuất hiện.
+- Không bỏ dở câu trả lời.
+- Giữ đúng hướng mũi tên và quan hệ giữa các thành phần.
+"""
 
     payload = {
         "model": model,
         "prompt": prompt,
         "images": [_encode_image(image_path)],
         "stream": False,
+        "keep_alive": -1,
         "options": {
             "temperature": 0.0,
-            "num_ctx": 1024,
-            "num_predict": 200,
-            "num_gpu": 18,
+            "num_ctx": 2048,
+            "num_predict": 320,
+            "num_gpu": -1,
+            "num_batch": 64,
         },
     }
 
@@ -78,9 +83,7 @@ def _call_ollama(
         with urllib.request.urlopen(request, timeout=timeout) as response:
             data = json.loads(response.read().decode("utf-8"))
     except urllib.error.URLError as exc:
-        raise RuntimeError(
-            "Không kết nối được Ollama. Hãy chạy: ollama serve"
-        ) from exc
+        raise RuntimeError("Không kết nối được Ollama. Hãy chạy Ollama service.") from exc
 
     if data.get("error"):
         raise RuntimeError(str(data["error"]))
@@ -89,7 +92,6 @@ def _call_ollama(
     if not text:
         raise RuntimeError("Ollama trả về nội dung rỗng.")
 
-    # Bỏ code fence bao ngoài nếu model tự thêm cho toàn bộ câu trả lời.
     if text.startswith("```") and text.endswith("```"):
         lines = text.splitlines()
         if len(lines) >= 3:
@@ -100,25 +102,34 @@ def _call_ollama(
 
 def _quality_issues(text: str) -> list[str]:
     lowered = text.casefold()
+    stripped = text.strip()
     issues: list[str] = []
 
-    if len(text.strip()) < 10:
+    if len(stripped) < 10 and stripped != "[Không rõ]":
         issues.append("too_short")
+    if stripped == "[Không rõ]":
+        issues.append("unclear")
     if any(pattern in lowered for pattern in REFUSAL_PATTERNS):
         issues.append("model_refused")
-    if any(section in text for section in ("Loại ảnh:", "Mô tả phục vụ RAG:", "Từ khóa:")):
-        issues.append("old_verbose_format")
+    if re.search(r"\bMục\s*1\b.*\bMục\s*2\b", text, flags=re.I | re.S):
+        issues.append("generic_placeholder")
+    if "Tên nhóm:" in text:
+        issues.append("generic_placeholder")
+    if text.count("```") % 2 != 0:
+        issues.append("unclosed_code_fence")
+    if stripped.endswith(("->", "|", ",", ":")):
+        issues.append("possibly_truncated")
 
-    return issues
+    return list(dict.fromkeys(issues))
 
 
 def describe_image(
-    ollama_url: str,
-    model: str,
-    image_path: Path,
-    max_retries: int = 2,
-    timeout: float = 180.0,
-    strict_format: bool = False,
+        ollama_url: str,
+        model: str,
+        image_path: Path,
+        max_retries: int = 2,
+        timeout: float = 180.0,
+        strict_format: bool = False,
 ) -> tuple[str, list[str]]:
     """Phân tích một ảnh và trả về (nội dung, danh sách lỗi chất lượng)."""
     last_error: Exception | None = None
@@ -137,7 +148,6 @@ def describe_image(
             issues = _quality_issues(text)
             if not issues:
                 return text, []
-
             best_text, best_issues = text, issues
         except Exception as exc:  # noqa: BLE001
             last_error = exc
@@ -172,9 +182,13 @@ def _metadata(block: Any) -> dict[str, Any]:
     return metadata
 
 
+def _block_type(block: Any) -> str:
+    value = _get(block, "block_type", "unknown")
+    return str(getattr(value, "value", value)).lower()
+
+
 def _is_image(block: Any) -> bool:
-    block_type = _get(block, "block_type", "")
-    return str(getattr(block_type, "value", block_type)).lower() == "image"
+    return _block_type(block) == "image"
 
 
 def _resolve_image(block: Any, image_dir: Path) -> Path | None:
@@ -210,24 +224,24 @@ def _skip_reason(block: Any, min_image_area: int = 25_000) -> str | None:
 
 
 def enrich_image_blocks(
-    blocks: Iterable[Any],
-    image_dir: Path,
-    ollama_url: str = "http://localhost:11434",
-    model: str = "qwen2.5vl:3b",
-    max_retries: int = 2,
-    timeout: float = 180.0,
-    strict_format: bool = False,
-    force: bool = False,
-    skip_noise_images: bool = True,
-    **_: Any,
+        blocks: Iterable[Any],
+        image_dir: Path,
+        ollama_url: str = "http://localhost:11434",
+        model: str = "qwen2.5vl:3b",
+        max_retries: int = 3,
+        timeout: float = 180.0,
+        strict_format: bool = False,
+        force: bool = False,
+        skip_noise_images: bool = True,
+        **_: Any,
 ) -> dict[str, int]:
-    """Gọi VLM cho các block ảnh và cập nhật content ngay trên block."""
     stats = {
         "image_blocks": 0,
         "processed": 0,
         "already_processed": 0,
         "skipped_noise": 0,
         "missing_file": 0,
+        "excluded": 0,
         "failed": 0,
     }
 
@@ -245,14 +259,23 @@ def enrich_image_blocks(
 
         image_path = _resolve_image(block, image_dir)
         if image_path is None:
-            metadata.update(vlm_processed=False, vlm_error="Không tìm thấy file ảnh.")
+            metadata.update(
+                vlm_processed=False,
+                exclude_from_embedding=True,
+                vlm_error="Không tìm thấy file ảnh.",
+            )
             stats["missing_file"] += 1
             continue
 
         if skip_noise_images:
             reason = _skip_reason(block)
             if reason:
-                metadata.update(vlm_processed=False, vlm_skipped=True, vlm_skip_reason=reason)
+                metadata.update(
+                    vlm_processed=False,
+                    vlm_skipped=True,
+                    exclude_from_embedding=True,
+                    vlm_skip_reason=reason,
+                )
                 stats["skipped_noise"] += 1
                 continue
 
@@ -266,24 +289,37 @@ def enrich_image_blocks(
                 strict_format=strict_format,
             )
             _set(block, "content", text)
+            exclude = bool(issues) or text.strip() == "[Không rõ]"
             metadata.update(
                 image_path=str(image_path.resolve()),
                 vlm_processed=True,
                 vlm_skipped=False,
                 vlm_model=model,
                 quality_issues=issues,
+                exclude_from_embedding=exclude,
             )
             metadata.pop("vlm_error", None)
             metadata.pop("vlm_skip_reason", None)
             stats["processed"] += 1
+            if exclude:
+                stats["excluded"] += 1
         except Exception as exc:  # noqa: BLE001
-            metadata.update(vlm_processed=False, vlm_error=str(exc))
+            metadata.update(
+                vlm_processed=False,
+                exclude_from_embedding=True,
+                vlm_error=str(exc),
+            )
             stats["failed"] += 1
 
     return stats
 
 
 def _split_text(text: str, chunk_size: int, overlap: int) -> list[str]:
+    if chunk_size <= 0:
+        raise ValueError("chunk_size phải lớn hơn 0")
+    if overlap < 0 or overlap >= chunk_size:
+        raise ValueError("chunk_overlap phải thỏa 0 <= overlap < chunk_size")
+
     text = re.sub(r"\n{3,}", "\n\n", text).strip()
     if not text or len(text) <= chunk_size:
         return [text] if text else []
@@ -293,68 +329,119 @@ def _split_text(text: str, chunk_size: int, overlap: int) -> list[str]:
     while start < len(text):
         end = min(start + chunk_size, len(text))
         if end < len(text):
-            cut = max(text.rfind("\n", start, end), text.rfind(" ", start, end))
-            end = cut if cut > start else end
-        chunks.append(text[start:end].strip())
+            candidates = [
+                text.rfind("\n\n", start, end),
+                text.rfind(". ", start, end),
+                text.rfind("! ", start, end),
+                text.rfind("? ", start, end),
+                text.rfind("\n", start, end),
+                text.rfind(" ", start, end),
+            ]
+            cut = max(candidates)
+            if cut > start:
+                end = cut + (1 if text[cut: cut + 2] in {". ", "! ", "? "} else 0)
+
+        chunk = text[start:end].strip()
+        if chunk:
+            chunks.append(chunk)
         start = max(end - overlap, start + 1)
-    return [chunk for chunk in chunks if chunk]
+
+    return chunks
 
 
-def build_rag_records(
-    blocks: Iterable[dict[str, Any]],
-    source_file: str | None,
-    chunk_size: int,
-    chunk_overlap: int,
+def build_page_rag_records(
+        blocks: Iterable[dict[str, Any]],
+        source_file: str | None,
+        chunk_size: int = 900,
+        chunk_overlap: int = 120,
 ) -> tuple[list[dict[str, Any]], list[str], list[str]]:
-    """Chuyển block thành chunk RAG và loại bản ghi trùng nội dung."""
-    records: list[dict[str, Any]] = []
+    """Ghép text và mô tả hình theo trang, rồi mới chia chunk."""
+    grouped: dict[tuple[str, int], list[dict[str, Any]]] = defaultdict(list)
     skipped: list[str] = []
 
     for block in blocks:
-        block_id = str(block.get("id", ""))
-        content = str(block.get("content", "")).strip()
-        if not content:
-            skipped.append(block_id or "<missing-id>")
+        block_id = str(block.get("id", "")) or "<missing-id>"
+        metadata = dict(block.get("metadata") or {})
+        content = str(block.get("content", "") or "").strip()
+
+        if metadata.get("exclude_from_embedding") or not content or content == "[Không rõ]":
+            skipped.append(block_id)
             continue
 
-        block_type = str(block.get("block_type", "unknown"))
-        chunks = _split_text(content, chunk_size, chunk_overlap)
-        base_metadata = dict(block.get("metadata") or {})
-        base_metadata.update(
-            document_id=block.get("document_id"),
-            page_number=block.get("page_number"),
-            block_index=block.get("block_index"),
-            block_type=block_type,
-            source_type="image" if block_type == "image" else "text",
-            source_file=base_metadata.get("source_file") or source_file,
-            bbox=block.get("bbox"),
-            parent_block_id=block_id,
-            chunk_count=len(chunks),
-        )
+        document_id = str(block.get("document_id", ""))
+        page_number = int(block.get("page_number") or 0)
+        grouped[(document_id, page_number)].append(block)
 
-        for index, chunk in enumerate(chunks):
-            metadata = dict(base_metadata, chunk_index=index)
+    records: list[dict[str, Any]] = []
+    for (document_id, page_number), page_blocks in sorted(grouped.items(), key=lambda item: item[0][1]):
+        page_blocks.sort(key=lambda block: int(block.get("block_index") or 0))
+
+        parts: list[str] = []
+        block_ids: list[str] = []
+        block_types: list[str] = []
+        page_source_file = source_file
+
+        for block in page_blocks:
+            block_id = str(block.get("id", ""))
+            block_type = str(block.get("block_type", "unknown")).lower()
+            content = str(block.get("content", "")).strip()
+            metadata = dict(block.get("metadata") or {})
+
+            block_ids.append(block_id)
+            block_types.append(block_type)
+            page_source_file = metadata.get("source_file") or page_source_file
+
+            if block_type == "image":
+                parts.append(f"Mô tả hình/sơ đồ:\n{content}")
+            else:
+                parts.append(content)
+
+        page_text = "\n\n".join(parts).strip()
+        chunks = _split_text(page_text, chunk_size, chunk_overlap)
+        title = page_text.splitlines()[0].strip() if page_text else ""
+
+        for chunk_index, chunk in enumerate(chunks):
             records.append(
                 {
-                    "id": f"{block_id}:chunk:{index}",
+                    "id": f"{document_id}:page:{page_number}:chunk:{chunk_index}",
                     "text": chunk,
-                    "metadata": metadata,
+                    "metadata": {
+                        "document_id": document_id,
+                        "page_number": page_number,
+                        "source_file": page_source_file,
+                        "source_type": "page",
+                        "title": title,
+                        "block_ids": block_ids,
+                        "block_types": sorted(set(block_types)),
+                        "chunk_index": chunk_index,
+                        "chunk_count": len(chunks),
+                    },
                 }
             )
 
     unique: list[dict[str, Any]] = []
-    seen: dict[str, dict[str, Any]] = {}
     duplicates: list[str] = []
-
+    seen: set[str] = set()
     for record in records:
-        key = record["text"].casefold()
+        key = re.sub(r"\s+", " ", record["text"]).strip().casefold()
         if key in seen:
             duplicates.append(record["id"])
             continue
-        seen[key] = record
+        seen.add(key)
         unique.append(record)
 
     return unique, skipped, duplicates
+
+
+# Giữ tên cũ để code khác trong dự án không bị lỗi import.
+def build_rag_records(blocks: Iterable[dict[str, Any]], source_file: str | None, chunk_size: int,
+                      chunk_overlap: int, ) -> tuple[list[dict[str, Any]], list[str], list[str]]:
+    return build_page_rag_records(
+        blocks=blocks,
+        source_file=source_file,
+        chunk_size=chunk_size,
+        chunk_overlap=chunk_overlap,
+    )
 
 
 def write_json(path: Path, data: Any) -> None:
