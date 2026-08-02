@@ -1,0 +1,559 @@
+Giới thiệu về lập trình
+
+KHOA CÔNG NGHỆ THÔNG TIN
+
+TRƯỜNG ĐẠI HỌC MỞ TPHCM
+
+Mục tiêu
+
+• Hiểu các khái niệm cơ bản: lập trình, chương trình, ngôn ngữ lập trình, chương trình dịch, môi trường lập trình.
+
+• Hiểu và có thểthực hiện các bước xây dựng một chương trình đơn giản.
+
+• Dùng ngôn ngữtựnhiên và lưu đồđểmô tảthuật giải của một chương trình.
+
+• Hiểu các thành phần cơ bản của một chương trình C++.
+
+• Tạo và thực thi một chương trình C++ trong môi trường lập trình Visual Studio.
+
+Nội dung
+
+1. Lập trình là gì? 2. Quy trình phát triển một chương trình 3. Lịch sử của ngôn ngữ lập trình 4. Ngôn ngữ lập trình C++
+
+Lập trình là gì?
+
+• Máy tính (computer) là máy lưu trữdữliệu (số, văn bản, hình ảnh), tương tác với các thiết bị(màn hình, máy in, loa) và thực thi chương trình.
+
+• Chương trình máy tính (computer program) là một chuỗi các chỉdẫn/lệnh (instructions) đểmáy tính thực hiện nhằm hoàn thành một nhiệm vụnào đó.
+
+• Lập trình (computer programming) là thiết kế(designing) và
+
+hiện thực (implementing) các chương trình máy tính bằng ngôn ngữlập trình (programming language).
+
+Nội dung
+
+1. Lập trình là gì? 2. Quy trình phát triển một chương trình
+
+§ Bước 1. Phân tích vấn đề
+
+§ Bước 2. Thiết kế thuật giải
+
+§ Bước 3. Lập trình
+
+§ Bước 4. Kiểm thử
+
+3. Lịch sử của ngôn ngữ lập trình
+
+4. Ngôn ngữ lập trình C++
+
+Quy trình phát triển một chương trình
+
+• Phân tích vấn đề(analyze the prolem). Xác định các dữliệu sẽ
+
+được cung cấp (input) và kết quảcần phải có (output). Output
+
+là mục tiêu của việc giải quyết vấn đề. Input là các dữliệu cần có đểđạt được mục tiêu.
+
+§ Sửdụng lưu đồIPO (Input, Processing, Output) đểsắp xếp và
+
+trình bày kết quảcủa bước phân tích.
+
+• Thiết kếthuật giải (design the algorithm). Đây là bước trọng tâm của quy trình giải quyết vấn đề. Tùy vào tính phức tạp và khó khăn của từng vấn đề, bước này có thểchỉcần một người làm việc trong vài giờhoặc cần đến cảmột đội ngũ lập trình viên làm việc trong vài tháng.
+
+§ Sử dụng flowchart hoặc pseudo-code (mã giả) để mô tả thuật giải.
+
+• Lập trình (code the program). Viết các câu lệnh (mã hóa chương trình) bằng một ngôn ngữlập trình đểhiện thực bản thiết kếđã tạo ởbước 2. Kết quảcủa bước này là chương trình (program).
+
+§ Sửdụng ngôn ngữlập trình C++.
+
+• Kiểm thử(test the program). Kiểm tra có thực sựgiải quyết được vấn đềđã cho hay chưa?
+
+Bước 1. Phân tích vấn đề
+
+• Mô tảvấn đề: Một cửa hàng bán ti vi cần một chương trình tính tiền và in và sốtiền khách phải trả. Sốtiền khách hàng phải trảđược tính bằng cách lấy giá bán ti vi nhân với tỷlệ thuế, sau đó cộng với giá bán.
+
+§ Xác định output: người sửdụng cần hiển thịcái gì ra màn hình,
+
+ra máy in hoặc cần lưu trữcái gì ra file? →tiền phải trả.
+
+§ Xác định input: thông tin máy tính cần phải biết đểcó thểhiển
+
+thịkết quảra màn hình, ra máy in hoặc lưu trữra file là gì? → giá bán và tỷlệthuế.
+
+§ Dùng lưu đồIPO đểtrình bày kết quảcủa bước phân tích:
+
+Processing items: tiền phải trả
+
+Input Processing Output giá bán tỷ lệ thuế
+
+Algorithm:
+
+Bước 2. Thiết kế thuật giải
+
+• Viết thuật giải đểchuyển input thành output. Thuật giải được viết trong cột Processing của lưu đồIPO.
+
+• Mỗi lệnh trong thuật giải sẽmô tảhành động mà máy tính sẽ thực hiện theo đúng thứtựđểcó được output từinput. Vì thế, các lệnh thường bắt đầu bằng động từ.
+
+Processing items:
+
+tiền phải trả
+
+Input Processing Output giá bán tỷ lệ thuế
+
+Algorithm:
+
+1. nhập giá bán và tỷ lệ thuế
+
+2. tính tiền phải trả = giá bán * tỷ lệ thuế + giá bán
+
+3. in ra tiền phải trả
+
+• Kiểm tra thuật giải (desk-checking/hand-tracing): dùng giấy và bút chì thực hiện từng bước của thuật giải.
+
+• Chọn một bộ dữ liệu nhập mẫu, ví dụ:
+
+giá bán tỷ lệ thuế giá bán*tỷ lệ thuế tiền phải trả 2300 0.05 115 2415 5200 0.03 156 5356
+
+• Thực hiện kiểm tra với cảdữliệu nhập hợp lệ(valid input) và không hợp lệ(invalid input). Dữliệu nhập không hợp lệlà dữ liệu mà thuật giải không muốn người sửdụng nhập, ví dụ nhập giá bán là sốâm.
+
+• Có thể mô tả thuật giải bằng lưu đồ:
+
+• Một số ký hiệu dùng trong lưu đồ
+
+Begin/End
+
+Preparation
+
+Control transfer
+
+Predefine process
+
+Input/Output
+
+Internal storage
+
+Decision
+
+Connector
+
+Process
+
+• Sử dụng Flowgorithm (http://www.flowgorithm.org) để vẽ lưu đồ.
+
+Bước 3. Lập trình
+
+• Chuyển mã giảcủa thuật giải thành các câu lệnh của một ngôn ngữ lập trình.
+
+• Trong chương trình nên có các chú thích (comment) đểgiải thích mục đích của các câu lệnh. Có hai loại chú thích cơ bản:
+
+§ Header comment: xuất hiện ởphần đầu của chương trình
+
+(chương trình con), cung cấp thông tin tổng quát của chương trình.
+
+§ Step comment: còn gọi là in-line comment, xuất hiện trong thân
+
+chương trình, giải thích mục đích của các câu lệnh.
+
+• Chú thích không được chương trình dịch chuyển thành mã máy, vì vậy không ảnh hưởng đến sựthực thi của chương trình. Chương trình được chú tích tốt sẽgiúp các lập trình viên khác hiểu chương trình một cách dễdàng. Tuy nhiên, không nên quá lạm dụng.
+
+//Chuong trinh tinh tien mua TV
+//Tac gia: NTTA
+//Ngay: 1/1/2018
+#include <iostream>
+using namespace std;
+int main()
+{
+
+//khai bao bien
+double giaban = 0.0;
+double tylethue = 0.0;
+double tienphaitra = 0.0;
+
+//nhap du lieu
+cout << "Nhap gia ban: ";
+cin >> giaban;
+cout << "Nhap ty le thue: ";
+cin >> tylethue;
+
+//tinh tien khach phai tra
+tienphaitra = giaban * tylethue + giaban;
+
+//in ket qua
+cout << "So tien khach tra: " << tienphaitra
+
+<< endl;
+
+return 0;
+}
+
+Bước 4. Kiểm thử
+
+• Kiểm thửđược thực hiện ởmỗi bước trong chu trình. Khi chương trình hoàn tất, kiểm thửđược thực hiện lần cuối và cũng là lần quan trọng nhất.
+
+• Chạy chương trình với dữliệu nhập mẫu (test data) đểso sánh kết quảchương trình với kết quảđã kiểm thửbằng tay (ởbước 2).
+
+Nhap gia ban: 2300
+Nhap ty le thue: 0.05
+So tien khach tra: 2415
+Nhap gia ban: 5200
+Nhap ty le thue: 0.03
+So tien khach tra: 5356
+
+Bài tập
+
+• Cho lưu đồ IPO như sau:
+
+tiền lời
+
+Input Processing Output số lượng bán giá mua giá bán
+
+Processing items: Algorithm:
+
+1. nhập số lượng bán, giá mua và giá bán
+
+2. tính tiền chênh lệch giữa giá mua và giá bán
+
+3. tính tiền lời bằng cách nhân tiền chênh lệch với số lượng bán
+
+4. in ra tiền lời
+
+§ Hãy cho biết giá trịtiền lời được in ra nếu nhập sốlượng bán là
+
+100, giá mua là 5 và giá bán là 8.
+
+§ Hãy hiệu chỉnh lưu đồ IPO để làm giảm bước tính toán.
+
+• Hãy viết thuật giải cho vấn đềsau đây:
+
+§ Mô tảvấn đề: Một cửa hàng bánh bán hai loại: bánh bông lan và
+
+bánh su, giá bán bằng nhau. Người quản lý cửa hàng cần có một chương trình tính tổng sốbánh (bông lan và bánh su) khách hàng mua và tổng sốtiền khách hàng phải trả.
+
+§ Mô tảlưu đồIPO.
+
+§ Kiểm tra với dữliệu nhập là 4, 2, 0.5 và 12, 0 và 0.45.
+
+Nội dung
+
+1. Lập trình là gì? 2. Quy trình phát triển một chương trình 3. Lịch sử của ngôn ngữ lập trình 4. Ngôn ngữ lập trình C++
+
+Lịch sử của ngôn ngữ lập trình
+
+• Ngôn ngữ máy (machine language/machine code)
+
++1300042774
++1400593419
++1200274027
+
+• Ngôn ngữ assembly (assembly language)
+
+load basepay
+add overpay
+store grosspay
+
+• Ngôn ngữ cấp cao (high-level language)
+
+gross_pay = base_pay + overtime_pay
+
+§ COBOL (Common Common Business-Oriented Language), BASIC
+
+(Beginner's All-Purpose Symbolic), C...
+
+§ C++, C#, Java, Python, Ruby, Perl...
+
+Các thành phần cơ bản của một ngôn ngữ lập trình
+
+• Biến (variables): là vùng nhớdùng đểlưu trữmột giá trịdữ liệu, mỗi biến có một tên.
+
+• Cấu trúc điều khiển (control structures/logic structures): điều khiển trật tựthực hiện các câu lệnh của chương trình (flow control).
+
+• Cấu trúc dữliệu (data structures): cách tổchức và lưu trữdữ liệu trong máy tính đểsửdụng dữliệu có hiệu quả.
+
+• Cú pháp (syntax): tập hợp các quy tắc của một ngôn ngữlập trình mà người lập trình cần phải tuân thủ.
+
+• Công cụ(tools): là môi trường giúp người lập trình phát triển chương trình (Integrated Development Environment - IDE).
+
+Chương trình dịch
+
+• Chương trình nguồn (source program) hay mã nguồn (source code) được viết bằng một ngôn ngữlập trình cấp cao và được lưu trong một file (văn bản không định dạng - plain text).
+
+• Chương trình dịch sẽchuyển chương trình nguồn sang mã máy (machine code) đểmáy tính thực thi.
+
+§ Biên dịch (compiler): chương trình dịch đọc toàn bộmã nguồn
+
+của một chương trình và chuyển tất cảsang mã máy, sau đó máy tính sẽthực hiện mã máy.
+
+§ Thông dịch (interpreter): chương trình dịch đọc mã nguồn và
+
+thực hiện từng dòng lệnh của mã nguồn đó.
+
+
+
+Nội dung
+
+1. Lập trình là gì? 2. Quy trình phát triển một chương trình 3. Lịch sử của ngôn ngữ lập trình 4. Ngôn ngữ lập trình C++
+
+§ Các thành phần cơ bản của chương trình C++
+
+§ Tạo và thực thi một chương trình C++
+
+§ Lỗi (error)
+
+Lịch sử ra đời
+
+• C++ do Bjarne Sroustrup phát minh năm 1979 tại AT&T Bell Laboratories, dựa trên C.
+
+• C++ là một ngôn ngữ lập trình:
+
+§ hỗ trợ trừu tượng hóa dữ liệu (data abstraction),
+
+§ hỗ trợ lập trình hướng đối tượng (object-oriented
+
+programming),
+
+§ hỗ trợ lập trình tổng quát (generic programming).
+
+Ngôn ngữ lập trình C++
+
+• C++ là ngôn ngữbiên dịch. Chương trình nguồn được trình biên dịch chuyển sang mã đối tượng (mã máy), sau đó liên kết với các mã đối tượng khác (thư viện) đểtạo thành chương trình thực thi.
+
+• C++ là ngôn ngữ phân biệt ký tự hoa và thường (case
+
+sensitive).
+
+§ someName khác với SomeName
+
+Các thành phần cơ bản của chương trình C++
+
+// Chuong trinh dau tien: hello.cpp
+#include <iostream>
+using namespace std;
+
+int main()
+{
+
+cout << "Hello, world!\n";
+return 0;
+}
+
+Chú thích
+
+// Chuong trinh dau tien: hello.cpp
+
+• Chú thích/ghi chú (comment) dùng để mô tả, giải thích, sưu liệu.
+
+• Có hai cách tạo chú thích:
+
+§ trên một dòng: //
+
+§ trên nhiều dòng: /* */
+
+• Ví dụ:
+
+/* Chuong trinh dau tien
+
+Ngay: 1/1/2014
+Tac gia: Tram Anh */
+
+Chỉ thị tiền xử lý
+
+#include <iostream>
+
+• Chỉ thị tiền xử lý (preprocessor directive), bắt đầu bằng ký tự
+
+#.
+• Sử dụng các đối tượng nhập/xuất như cin, cout... có trong
+iostream (header file).
+
+Namespace
+
+using namespace std;
+
+• Sử dụng tên các đối tượng có trong vùng tên chuẩn std như
+các tên cin, cout.
+• Nếu không khai báo using namespace std; thì khi dùng
+cout phải ghi rõ: std::cout.
+
+Hàm
+
+int main()
+{
+
+cout << "Hello, world!\n";
+return 0;
+}
+
+• Chương trình C++ có thểcó nhiều hàm (function) và chương
+
+trình bắt đầu thực hiện từhàm main.
+
+• Mỗi hàm gồm:
+
+§ Kiểu trả về.
+
+§ Tên hàm.
+
+§ Danh sách tham số đặt giữa hai dấu ngoặc đơn (). Thân hàm đặt
+
+giữa hai dấu ngoặc nhọn { }, liệt kê các câu lệnh/phát biểu mà hàm thực hiện.
+
+• Chương trình hello.cpp chỉ có một hàm:
+
+§ Kiểu trả về là int
+
+§ Tên hàm là main
+
+§ Danh sách tham số trống.
+
+§ Thân hàm có hai câu lệnh.
+
+Câu lệnh
+
+cout << "Hello, world!\n";
+
+• Câu lệnh in ra màn hình dòng chữHello, world!, '\n' là
+ký tựxuống hàng. cout được khai báo trong iostream,
+(namespace std).
+
+• Chuỗi xuất ra màn hình được đặt giữa hai dấu nháy kép.
+
+• Có thểdùng ký hiệu endl đểxuống hàng:
+cout << "Hello, world!" << endl;
+
+return 0;
+
+• Câu lệnh trảvề(return statement) giá trị0, báo cho hệthống
+
+chương trình kết thúc thành công.
+
+• Câu lệnh (statement) kết thúc bằng dấu chấm phẩy (;).
+
+Bài tập
+
+• Viết chương trình in ra màn hình họvà tên của bạn.
+
+• Viết chương trình in ra màn hình "Ban co thich lap
+trinh khong?".
+
+• Viết chương trình in ra màn hình mã sốsinh viên và họtên của bạn trên hai dòng.
+
+Tạo và thực thi chương trình C++
+
+• Bước 1: Khởi động môi trường lập trình.
+
+§ Microsoft Visual Studio 2010
+
+• Bước 2: Viết chương trình.
+
+§ Tạo project mới:
+
+◦File→New Project→Win32 Console Application ◦chọn thư mục lưu trữ và đặt tên project.
+
+§ Thêm vào project một file mới:
+
+◦Project→Add New Item→C++ File (.cpp) ◦đặt tên file.
+
+§ Gõ vào source code.
+
+• Bước 3: Biên dịch và thực thi chương trình.
+
+§ Biên dịch: Ctrl + F7
+
+§ Thực thi: Ctrl + F5
+
+
+
+Lỗi
+
+• Lỗi do compiler phát hiện: compile-time errors.
+
+• Lỗi do linker phát hiện: link-time errors.
+
+• Lỗi khi chương trình thực thi: run-time errors hoặc logic errors.
+
+Ví dụ một số lỗi
+
+• Không #include hoặc thiếu using namespace std
+//no #include here
+int main()
+{
+
+cout << "Hello, world!\n";
+return 0;
+}
+® error: 'cout' : undeclared identifier
+
+• Gõ sai iostram
+
+#include <iostram>
+using namespace std;
+int main()
+{
+
+cout << "Hello, world!\n";
+return 0;
+}
+® error: Cannot open include file: 'iostram': No
+such file or directory
+® error: 'cout' : undeclared identifier
+
+• Thiếu dấu nháy đôi kết thúc chuỗi
+
+#include <iostream>
+using namespace std;
+int main()
+{
+
+cout << "Hello, world!\n;
+return 0;
+}
+® error: expected a ';'
+
+• Gõ sai từ khóa int
+#include <iostream>
+using namespace std;
+integer main()
+{
+
+cout << "Hello, world!\n";
+return 0;
+}
+® error: identifier "integer" is undefined
+
+• Dùng < thay vì <<
+#include <iostream>
+using namespace std;
+int main()
+{
+
+cout < "Hello, world!\n";
+return 0;
+}
+® warning: '<' : operator has no effect;
+expected operator with side-effect
+
+• Dùng dấu nháy đơn thay vì dấu nháy đôi
+
+#include <iostream>
+using namespace std;
+int main()
+{
+
+cout << 'Hello, world!\n';
+return 0;
+}
+® error: too many characters in constant
+
+• Thiếu dấu chấm phẩy;
+
+#include <iostream>
+using namespace std;
+int main()
+{
+
+cout << "Hello, world!\n"
+return 0;
+}
+® error: missing ';' before 'return'
+
+CƠ SỞ LẬP TRÌNH - ĐH MỞ TPHCM
