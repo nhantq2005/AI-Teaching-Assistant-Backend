@@ -110,20 +110,14 @@ class DocumentService:
 
             if file is not None:
                 if not file.filename:
-                    raise HTTPException(
-                        status_code=status.HTTP_400_BAD_REQUEST,
-                        detail="Tên file không hợp lệ",
-                    )
+                    raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Tên file không hợp lệ")
 
                 extension = Path(file.filename).suffix.lower()
 
                 if extension not in ALLOWED_EXTENSIONS:
                     raise HTTPException(
                         status_code=status.HTTP_400_BAD_REQUEST,
-                        detail=(
-                            "Định dạng file không được hỗ trợ. "
-                            "Chỉ chấp nhận PDF, DOC, DOCX, PPT và PPTX"
-                        ),
+                        detail=("Chỉ hỗ trợ định dạng PDF, DOC, DOCX, PPT và PPTX")
                     )
 
                 await file.seek(0)
@@ -170,3 +164,8 @@ class DocumentService:
         except Exception as e:
             await self.session.rollback()
             raise e
+
+    async def get_documents_by_subject_id(self, subject_id: int) -> List[Document]:
+        stm = select(Document).where(Document.subject_id == subject_id)
+        result = await self.session.execute(stm)
+        return list(result.scalars().all())

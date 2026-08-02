@@ -22,5 +22,4 @@ class QuizAttempt(Base):
     user: Mapped["User"] = relationship(back_populates="attempt_quizzes")
     quiz: Mapped["Quiz"] = relationship(back_populates="quiz_attempts")
 
-    options: Mapped[set["Option"]] = relationship(back_populates="quiz_attempt")
     user_answers: Mapped[set["UserAnswer"]] = relationship(back_populates="quiz_attempt")

@@ -7,6 +7,7 @@ from app.db.session import get_db
 from app.services.document_service import DocumentService
 from app.services.subject_service import SubjectService
 from app.services.user_service import UserService
+from app.services.quiz_service import QuizService
 from app.core.config import settings
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/users/login")
@@ -21,6 +22,9 @@ def get_document_service(db: AsyncSession = Depends(get_db)) -> DocumentService:
 
 def get_subject_service(db: AsyncSession = Depends(get_db)) -> SubjectService:
     return SubjectService(db)
+
+def get_quiz_service(db: AsyncSession = Depends(get_db)) -> 'QuizService':
+    return QuizService(db)
 
 # Dependency 2: Lấy User hiện tại đang đăng nhập từ Token
 async def get_current_user(
