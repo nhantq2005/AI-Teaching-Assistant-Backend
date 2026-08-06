@@ -2,6 +2,7 @@ from datetime import datetime
 from typing import Optional
 from pydantic import BaseModel, ConfigDict
 
+from app.schemas.document import DocumentResponse
 from app.schemas.user import UserResponse
 
 
@@ -20,3 +21,13 @@ class SubjectResponse(SubjectRequest):
     lecturer: UserResponse
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class SubjectDetailRespone(SubjectRequest):
+    id: int
+    name: str
+    code: str
+    description: str
+    created_date: datetime
+    lecturer: UserResponse
+    documents: list[DocumentResponse]

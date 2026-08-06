@@ -11,7 +11,7 @@ class SubjectService:
         self.session = session
 
     async def get_subject_by_id(self, subject_id: int) -> Optional[Subject]:
-        stm = select(Subject).options(selectinload(Subject.lecturer)).where(Subject.id == subject_id)
+        stm = select(Subject).options(selectinload(Subject.lecturer), selectinload(Subject.documents)).where(Subject.id == subject_id)
         result = await self.session.execute(stm)
         return result.scalar_one_or_none()
 
@@ -51,3 +51,9 @@ class SubjectService:
             await self.session.commit()
             return True
         return False
+
+    async def get_subjects_by_lecturer(self, lecturer_id: int) -> Sequence[Subject]:
+        stm = select(Subject).options(selectinload(Subject.lecturer)).where(Subject.lecturer_id == lecturer_id)
+        result = await self.session.execute(stm)
+        return result.scalars().all()
+
