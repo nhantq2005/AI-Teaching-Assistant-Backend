@@ -2,29 +2,30 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from typing import List
 
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.schemas.subject import SubjectRequest, SubjectResponse
+from app.schemas.subject import SubjectRequest, SubjectResponse, SubjectDetailRespone
+from app.schemas.user import UserResponse
 from app.services.subject_service import SubjectService
 from app.db.session import get_db
 
-router = APIRouter(prefix="/subjects", tags=["Subjects"])
+router = APIRouter(tags=["Subjects"])
 
 
 def get_subject_service(session: AsyncSession = Depends(get_db)):
     return SubjectService(session)
 
 
-@router.post("/", response_model=SubjectResponse)
+@router.post("/subjects", response_model=SubjectResponse)
 async def create_subject(subject: SubjectRequest, subject_service: SubjectService = Depends(get_subject_service)):
     return await subject_service.create_subject(subject=subject)
 
 
-@router.get("/", response_model=List[SubjectResponse])
+@router.get("/subjects", response_model=List[SubjectResponse])
 async def read_subjects(skip: int = 0, limit: int = 100,
                         subject_service: SubjectService = Depends(get_subject_service)):
     return await subject_service.get_subjects(skip=skip, limit=limit)
 
 
-@router.get("/{subject_id}", response_model=SubjectResponse)
+@router.get("/subjects/{subject_id}", response_model=SubjectDetailRespone)
 async def read_subject(subject_id: int, subject_service: SubjectService = Depends(get_subject_service)):
     db_subject = await subject_service.get_subject_by_id(subject_id=subject_id)
     if db_subject is None:
@@ -32,7 +33,7 @@ async def read_subject(subject_id: int, subject_service: SubjectService = Depend
     return db_subject
 
 
-@router.put("/{subject_id}", response_model=SubjectResponse)
+@router.put("/subjects/{subject_id}", response_model=SubjectResponse)
 async def update_subject(subject_id: int, subject: SubjectRequest,
                          subject_service: SubjectService = Depends(get_subject_service)):
     db_subject = await subject_service.update_subject(subject_id=subject_id, subject=subject)
@@ -41,7 +42,7 @@ async def update_subject(subject_id: int, subject: SubjectRequest,
     return db_subject
 
 
-@router.delete("/{subject_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/subjects/{subject_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_subject(
         subject_id: int,
         subject_service: SubjectService = Depends(get_subject_service)
@@ -54,3 +55,14 @@ async def delete_subject(
             detail="Subject not found"
         )
     return None
+
+
+@router.get("/users/{user_id}/subjects", response_model=SubjectResponse)
+async def get_subjects_by_lecture(
+        user_id: int,
+        subject_service: SubjectService = Depends(get_subject_service)
+):
+    subjects = subject_service.get_subjects_by_lecturer(user_id)
+    if subjects is None:
+        raise HTTPException(status_code=404, detail="User not found")
+    return subjects
