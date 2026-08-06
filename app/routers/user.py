@@ -6,7 +6,7 @@ from typing import Any
 from app.api.dependencies import get_current_user, get_user_service
 from app.services.user_service import UserService
 from app.core.security import create_access_token
-from app.schemas.user import UserCreate, UserResponse
+from app.schemas.user import UserCreate, UserResponse, UserLogin
 from app.models.user import User
 
 router = APIRouter(prefix="/users", tags=["Users"])
@@ -35,12 +35,12 @@ async def register_user(user_in: UserCreate, user_service: UserService = Depends
 
 
 @router.post("/login")
-async def login(form_data: OAuth2PasswordRequestForm = Depends(), user_service: UserService = Depends(get_user_service)) -> Any:
+async def login(login_data: UserLogin, user_service: UserService = Depends(get_user_service)) -> Any:
     """
     API đăng nhập lấy JWT Token
     """
     # Gọi logic kiểm tra tài khoản và mật khẩu từ UserService
-    user = await user_service.login(form_data.username, form_data.password)
+    user = await user_service.login(login_data.username, login_data.password)
 
     if not user:
         raise HTTPException(
