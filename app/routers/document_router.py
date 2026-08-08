@@ -2,13 +2,20 @@ from typing import List
 from fastapi import APIRouter, Depends, HTTPException, status, Form
 from app.api.dependencies import get_document_service
 from app.schemas.document import DocumentRequest, DocumentResponse, DocumentUpdateRequest
-from fastapi import UploadFile, File
+from fastapi import UploadFile, File, BackgroundTasks
 from app.services.document_service import DocumentService
+from app.rag.processing_pipeline import process_document_pipeline
+from app.db.session import AsyncSessionLocal
+
+async def run_pipeline_task(document_id: int, file_bytes: bytes, file_name: str):
+    async with AsyncSessionLocal() as session:
+        await process_document_pipeline(document_id, file_bytes, file_name, session)
 
 router = APIRouter(tags=["documents"])
 
 @router.post("/documents", response_model=DocumentResponse, status_code=status.HTTP_201_CREATED)
 async def create_document_api(
+    background_tasks: BackgroundTasks,
     title: str = Form(...),
     lecturer_id: int = Form(...),
     subject_id: int = Form(...),
@@ -20,7 +27,13 @@ async def create_document_api(
         subject_id=subject_id,
     )
 
-    return await document_service.create_document(document_request=document_request, file=file)
+    document = await document_service.create_document(document_request=document_request, file=file)
+
+    await file.seek(0)
+    file_bytes = await file.read()
+    background_tasks.add_task(run_pipeline_task, document.id, file_bytes, file.filename)
+
+    return document
 
 @router.get("/subjects/{subject_id}/documents", response_model=List[DocumentResponse])
 async def get_documents_by_subject_api(subject_id: int, document_service: DocumentService = Depends(get_document_service)):

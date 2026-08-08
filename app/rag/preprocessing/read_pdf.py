@@ -7,14 +7,8 @@ import statistics
 import unicodedata
 from collections import defaultdict
 from pathlib import Path
-
 import pymupdf
-
-
-# ============================================================
-# CẤU HÌNH
-# File đặt tại: app/rag/preprocessing/read_pdf.py
-# ============================================================
+from app.rag.preprocessing.convert_to_unicode import convert_tcvn3_to_unicode
 
 CURRENT_FILE = Path(__file__).resolve()
 ROOT = (
@@ -39,34 +33,6 @@ HEADING_RE = re.compile(
     re.I,
 )
 TOC_RE = re.compile(r"\.{4,}\s*\d+\s*$")
-
-# ============================================================
-# TỪ ĐIỂN CHUYỂN ĐỔI TCVN3 -> UNICODE
-# ============================================================
-TCVN3_CHARS = "µ¸¶·¹¨»¾¼½Æ©ÇÊÈÉË®ÌÐÎÏÑªÒÕÓÔÖ×ÝØÜÞßãáâä«åèæçé¬êíëìîïóñòô\xadõøö÷ùúýûüþ"
-UNICODE_CHARS = "àáảãạăằắẳẵặâầấẩẫậđèéẻẽẹêềếểễệìíỉĩịòóỏõọôồốổỗộơờớởỡợùúủũụưừứửữựỳýỷỹỵ"
-TCVN3_MAP = str.maketrans(TCVN3_CHARS, UNICODE_CHARS)
-
-# [MỚI] Các ký tự tiếng Việt chuẩn (Cả chữ thường và chữ hoa)
-STD_VN_CHARS = set(
-    "àáảãạăằắẳẵặâầấẩẫậđèéẻẽẹêềếểễệìíỉĩịòóỏõọôồốổỗộơờớởỡợùúủũụưừứửữựỳýỷỹỵÀÁẢÃẠĂẰẮẲẴẶÂẦẤẨẪẬĐÈÉẺẼẸÊỀẾỂỄỆÌÍỈĨỊÒÓỎÕỌÔỒỐỔỖỘƠỜỚỞỠỢÙÚỦŨỤƯỪỨỬỮỰỲÝỶỸỴ")
-
-# [MỚI] Lọc ra các ký tự dị biệt độc quyền của TCVN3 để làm dấu hiệu nhận biết
-TCVN3_SIGNATURES = set(TCVN3_CHARS) - STD_VN_CHARS
-
-
-def convert_tcvn3_to_unicode(text: str) -> str:
-    """Quét và sửa lỗi bảng mã TCVN3 sang Unicode chuẩn một cách an toàn."""
-    text = text.replace("¤", "ô")
-    text = re.sub(r'[-−]([¬êíëìî])', r'ư\1', text)
-    text = re.sub(r'[-−]([õøö÷ù])', r'ư\1', text)
-
-    # [QUAN TRỌNG] Chỉ thực hiện convert nếu câu thực sự chứa các ký tự TCVN3 dị biệt.
-    # Ngăn chặn việc hàm translate phá hỏng các đoạn văn bản đang là Unicode chuẩn.
-    if any(c in TCVN3_SIGNATURES for c in text):
-        return text.translate(TCVN3_MAP)
-
-    return text
 
 def clean(text: str) -> str:
     text = convert_tcvn3_to_unicode(text)
@@ -132,10 +98,10 @@ def join_chars(spans: list[dict]) -> str:
     return clean("".join(result))
 
 
-def read_pages(pdf_path: Path) -> list[dict]:
+def read_pages(pdf_bytes: bytes):
     pages = []
 
-    with pymupdf.open(pdf_path) as doc:
+    with pymupdf.open(stream=pdf_bytes, filetype="pdf") as doc:
         if doc.needs_pass:
             raise ValueError("PDF được bảo vệ bằng mật khẩu.")
 
@@ -390,8 +356,8 @@ def to_blocks(page: dict, edges: set[str], body_size: float) -> list[dict]:
     return result
 
 
-def extract_pdf(pdf_path: Path) -> None:
-    pages = read_pages(pdf_path)
+def extract_pdf(pdf_bytes: bytes, file_name: str):
+    pages = read_pages(pdf_bytes)
     edges = repeated_edges(pages)
 
     sizes = [
@@ -402,9 +368,7 @@ def extract_pdf(pdf_path: Path) -> None:
         if line["size"] > 0 and len(line["text"]) > 3
     ]
     body_size = statistics.median(sizes) if sizes else 11.0
-
-    output_dir = OUTPUT_DIR / pdf_path.stem
-    output_dir.mkdir(parents=True, exist_ok=True)
+    file_stem = file_name.rsplit('.', 1)[0]
 
     records = []
     headings: list[str] = []
@@ -420,8 +384,8 @@ def extract_pdf(pdf_path: Path) -> None:
 
             records.append(
                 {
-                    "id": f"{pdf_path.stem}:p{page['number']}:b{index}",
-                    "source_file": pdf_path.name,
+                    "id": f"{file_stem}:p{page['number']}:b{index}",
+                    "source_file": file_name,
                     "page_number": page["number"],
                     "block_index": index,
                     "block_type": block["block_type"],
@@ -432,48 +396,28 @@ def extract_pdf(pdf_path: Path) -> None:
                 }
             )
 
-    jsonl_path = output_dir / "blocks.jsonl"
+    # jsonl_path = output_dir / "blocks.jsonl"
+    #
+    # with jsonl_path.open("w", encoding="utf-8") as file:
+    #     for record in records:
+    #         file.write(json.dumps(record, ensure_ascii=False) + "\n")
+    #
+    # if WRITE_PREVIEW:
+    #     preview = []
+    #
+    #     for record in records:
+    #         preview.append(
+    #             f"[TRANG {record['page_number']}] "
+    #             f"[{record['block_type'].upper()}]\n"
+    #             f"{record['text']}"
+    #         )
+    #
+    #     (output_dir / "preview.txt").write_text(
+    #         "\n\n".join(preview),
+    #         encoding="utf-8",
+    #     )
+    #
+    # print(f"[OK] {pdf_path.name}: {len(records)} blocks")
 
-    with jsonl_path.open("w", encoding="utf-8") as file:
-        for record in records:
-            file.write(json.dumps(record, ensure_ascii=False) + "\n")
+    return records
 
-    if WRITE_PREVIEW:
-        preview = []
-
-        for record in records:
-            preview.append(
-                f"[TRANG {record['page_number']}] "
-                f"[{record['block_type'].upper()}]\n"
-                f"{record['text']}"
-            )
-
-        (output_dir / "preview.txt").write_text(
-            "\n\n".join(preview),
-            encoding="utf-8",
-        )
-
-    print(f"[OK] {pdf_path.name}: {len(records)} blocks")
-
-
-def main() -> None:
-    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-
-    pdf_files = (
-        [INPUT_DIR]
-        if INPUT_DIR.is_file()
-        else sorted(INPUT_DIR.glob("*.pdf"))
-    )
-
-    if not pdf_files:
-        raise FileNotFoundError(f"Không tìm thấy PDF trong: {INPUT_DIR}")
-
-    for pdf_file in pdf_files:
-        try:
-            extract_pdf(pdf_file)
-        except Exception as exc:
-            print(f"[LỖI] {pdf_file.name}: {exc}")
-
-
-if __name__ == "__main__":
-    main()
