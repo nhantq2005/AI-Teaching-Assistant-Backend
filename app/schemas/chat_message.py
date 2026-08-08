@@ -6,6 +6,10 @@ class ChatMessageCreate(BaseModel):
     answer: str
     chat_session_id: int
 
+class ChatMessageRequest(BaseModel):
+    question: str
+    chat_session_id: int
+
 class ChatMessageUpdate(BaseModel):
     question: Optional[str] = None
     answer: Optional[str] = None
